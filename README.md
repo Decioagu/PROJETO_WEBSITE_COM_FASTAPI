@@ -14,6 +14,8 @@ Para acesso a pagina administrativa é necessário login de um membro previament
 
 O acesso ao login fica no roda pé de qualquer pagina de acesso ao publico em geral  (publicas):
 
-![Texto alternativo](C:\REPOSITORIO\PROJETO_WEBSITE_COM_FASTAPI\media\Captura de tela 2025-06-03 024319.png)
+![Texto alternativo](media/Imagem_01.png)
+
+
 
 
