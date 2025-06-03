@@ -100,6 +100,9 @@ class MembroAdmin(BaseCrudView):
         if request.method == 'GET':
             return await super().object_details(object_controller=membro_controller, obj_id=membro_id)
         
+        if membro_id == 1:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Não é possível editar o membro administrador.")
+
         # Se o request for POST
         membro = await membro_controller.get_one_crud(id_obj=membro_id)
 

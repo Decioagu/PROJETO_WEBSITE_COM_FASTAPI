@@ -5,6 +5,19 @@ from fastapi.requests import Request
 from core.configs import settings
 
 
+async def forbidden(request: Request, ext: HTTPException):
+    """
+    Retorna uma página 403
+    """
+    if 'admin' in str(request.url):
+        template = 'admin/403.html'
+    else:
+        template = '403.html'
+    
+    context = {"request": request}
+
+    return settings.TEMPLATES.TemplateResponse(template, context, status_code=status.HTTP_403_FORBIDDEN)
+
 async def not_found(request: Request, ext: HTTPException):
     """
     Retorna uma página 404
@@ -35,7 +48,8 @@ async def server_error(request: Request, ext: HTTPException):
 
 exception_handlers = {
     404: not_found,
-    500: server_error
+    500: server_error,
+    403: forbidden
 }
 
 

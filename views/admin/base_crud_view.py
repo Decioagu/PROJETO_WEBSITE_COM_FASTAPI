@@ -74,8 +74,13 @@ class BaseCrudView:
 
         objeto = await object_controller.get_one_crud(id_obj=obj_id)
 
+        # Se o objeto não existir
         if not objeto:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Se o objeto for o primeiro (id=1), não pode ser deletado
+        if obj_id == 1:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Você não pode deletar este objeto.")
         
         # Deletar o objeto
         await object_controller.del_crud(id_obj=objeto.id)
