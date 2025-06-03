@@ -1,7 +1,3 @@
-from datetime import datetime
-
-from fastapi.routing import APIRouter
-from starlette.routing import Route
 from fastapi import status
 from fastapi.requests import Request
 from fastapi.responses import Response, RedirectResponse
@@ -10,21 +6,15 @@ from fastapi.exceptions import HTTPException
 from core.configs import settings
 from controllers.comentario_controller import ComentarioController
 from views.admin.base_crud_view import BaseCrudView
+from models.post_model import PostModel
+from core.deps import valida_login
 
 
 
 class ComentarioAdmin(BaseCrudView):
 
-    def __init__(self) -> None:
-        self.router = APIRouter()
-
-        self.router.routes.append(Route(path='/comentario/list', endpoint=self.object_list, methods=["GET",], name='comentario_list'))
-        self.router.routes.append(Route(path='/comentario/create', endpoint=self.object_create, methods=["GET", "POST"], name='comentario_create'))
-        self.router.routes.append(Route(path='/comentario/details/{comentario_id:int}', endpoint=self.object_edit, methods=["GET",], name='comentario_details'))
-        self.router.routes.append(Route(path='/comentario/edit/{comentario_id:int}', endpoint=self.object_edit, methods=["GET", "POST"], name='comentario_edit'))
-        self.router.routes.append(Route(path='/comentario/delete/{comentario_id:int}', endpoint=self.object_delete, methods=["DELETE",], name='comentario_delete'))
-       
-        super().__init__('comentario')
+    def __init__(self) -> None:   
+        super().__init__('comentario') # nome (classe filha)
     
 
     async def object_list(self, request: Request) -> Response:
@@ -42,7 +32,7 @@ class ComentarioAdmin(BaseCrudView):
         """
         comentario_controller: ComentarioController = ComentarioController(request)
 
-        comentario_id: int = request.path_params["comentario_id"]
+        comentario_id: int = request.path_params["obj_id"]
 
         return await super().object_delete(object_controller=comentario_controller, obj_id=comentario_id)
     
@@ -51,13 +41,24 @@ class ComentarioAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário e criar um objeto [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+            if not context["membro"]:
+                return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         comentario_controller: ComentarioController = ComentarioController(request)
 
         # Se o request for GET
         if request.method == 'GET':
             # Adicionar o request e os posts no context
-            posts = await comentario_controller.get_posts()
-            context = {"request": comentario_controller.request, "ano": datetime.now().year, "posts": posts}
+            posts = await comentario_controller.get_objetos(PostModel)
+            context.update({"posts": posts})
 
             return settings.TEMPLATES.TemplateResponse(f"admin/comentario/create.html", context=context)
         
@@ -72,15 +73,10 @@ class ComentarioAdmin(BaseCrudView):
             id_post: int = form.get('post')
             autor: str = form.get('autor')
             texto: str = form.get('texto')
-            posts = await comentario_controller.get_posts()
+            posts = await comentario_controller.get_objetos(PostModel)
             dados = {"id_post": id_post, "autor": autor, "texto": texto}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "posts": posts,
-                "objeto": dados
-            }
+            context.update({"error": err, "posts": posts, "objeto": dados})
+
             return settings.TEMPLATES.TemplateResponse("admin/comentario/create.html", context=context)
         
         return RedirectResponse(request.url_for("comentario_list"), status_code=status.HTTP_302_FOUND)
@@ -90,9 +86,21 @@ class ComentarioAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário de edição e atualizar um comentário [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+            if not context["membro"]:
+                return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         comentario_controller: ComentarioController = ComentarioController(request)
 
-        comentario_id: int = request.path_params["comentario_id"]
+        # Recebe o id do comentário
+        comentario_id: int = request.path_params["obj_id"]
         
         # Se o request for GET
         if request.method == 'GET'  and 'details' in str(comentario_controller.request.url):
@@ -105,8 +113,8 @@ class ComentarioAdmin(BaseCrudView):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
             
             # Adicionar o request e os posts no context
-            posts = await comentario_controller.get_posts()
-            context = {"request": comentario_controller.request, "ano": datetime.now().year, "objeto": comentario, "posts": posts}
+            posts = await comentario_controller.get_objetos(PostModel)
+            context.update({"objeto": comentario, "posts": posts})
 
             return settings.TEMPLATES.TemplateResponse(f"admin/comentario/edit.html", context=context)
         
@@ -127,12 +135,8 @@ class ComentarioAdmin(BaseCrudView):
             autor: str = form.get('autor')
             texto: str = form.get('texto')
             dados = {"id": comentario_id, "post": post, "autor": autor, "texto": texto}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "dados": dados
-            }
+            context.update({"error": err, "dados": dados}) # Adição
+         
             return settings.TEMPLATES.TemplateResponse("admin/comentario/edit.html", context=context)
         
         return RedirectResponse(request.url_for("comentario_list"), status_code=status.HTTP_302_FOUND)

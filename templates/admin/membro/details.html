@@ -11,14 +11,18 @@
                 <thead>
                     <tr>
                         <th>Nome</th>
+                        <th>E-mail</th> <!-- Adição de email -->
                         <th>Função</th>
+                        <th>Senha</th> <!-- Adição de senha -->
                         <th>Imagem</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>{{ objeto.nome }}</td>
+                        <td>{{ objeto.email }}</td> <!-- Adição de email -->
                         <td>{{ objeto.funcao }}</td>
+                        <td>{{ objeto.senha[:3] }}...</td> <!-- Adição de senha -->
                         <td><a href="{{ url_for('media', path='membro/' + objeto.imagem) }}" target="_blank"><img src="{{ url_for('media', path='membro/' + objeto.imagem) }}" width="7%" height="auto"/></a></td>
                     </tr>
                 </tbody>
@@ -32,12 +36,12 @@
                     </a>
                 </div>
                 <div class="col">
-                    <a href="#" data-url="{{ url_for('membro_delete', membro_id=objeto.id) }}" data-toggle="modal" data-target="#modal-delete" class="btn btn-danger">
+                    <a href="#" data-url="{{ url_for('membro_delete', obj_id=objeto.id) }}" data-toggle="modal" data-target="#modal-delete" class="btn btn-danger">
                         Deletar
                     </a>
                 </div>
                 <div class="col">
-                    <a href="{{ url_for('membro_edit', membro_id=objeto.id) }}" class="btn btn-primary">
+                    <a href="{{ url_for('membro_edit', obj_id=objeto.id) }}" class="btn btn-primary">
                         Editar
                     </a>
                 </div>

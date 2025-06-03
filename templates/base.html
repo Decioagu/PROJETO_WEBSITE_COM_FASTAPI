@@ -59,6 +59,8 @@
                         <a class="link-light small" href="#!">Terms</a>
                         <span class="text-white mx-1">&middot;</span>
                         <a class="link-light small" href="#!">Contact</a>
+                        <span class="text-white mx-1">&middot;</span> <!-- Adição de login -->
+                        <a class="link-light small" href="{{ url_for('get_login') }}">Login</a> <!-- Adição de login -->
                     </div>
                 </div>
             </div>
@@ -69,3 +71,4 @@
         <script src="{{ url_for('static', path='js/scripts.js') }}"></script> <!-- link para estilo layout base -->
     </body>
 </html>
+<!-- Adição de login -->

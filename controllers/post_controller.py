@@ -10,6 +10,7 @@ from uuid import uuid4
 from core.configs import settings
 from core.configs import get_session
 from models.post_model import PostModel
+from models.tag_model import TagModel
 from controllers.base_controller import BaseController
 
 
@@ -37,7 +38,7 @@ class PostController(BaseController):
         
         # Busca e adiciona as tags
         for id_tag in tags:
-            tag = await self.get_tag(id_tag=int(id_tag))
+            tag = await self.get_objeto(model_obj=TagModel, id_obj=int(id_tag))
             post.tags.append(tag)
 
         # Fazer o upload do arquivo
@@ -72,7 +73,7 @@ class PostController(BaseController):
                     await session.commit()
                     # Busca e adiciona as tags
                     for id_tag in tags:
-                        tag = await self.get_tag(id_tag=int(id_tag))
+                        tag = await self.get_objeto(model_obj=TagModel, id_obj=int(id_tag))
                         # Operação para juntar o objeto tag que vem de outra
                         # sessão com o objeto post que está nesta sessão.
                         tag_local = await session.merge(tag)

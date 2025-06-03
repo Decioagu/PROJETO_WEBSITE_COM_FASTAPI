@@ -1,7 +1,3 @@
-from datetime import datetime
-
-from fastapi.routing import APIRouter
-from starlette.routing import Route
 from fastapi import status
 from fastapi.requests import Request
 from fastapi.responses import Response, RedirectResponse
@@ -10,21 +6,13 @@ from fastapi.exceptions import HTTPException
 from core.configs import settings
 from controllers.area_controller import AreaController
 from views.admin.base_crud_view import BaseCrudView
-
+from core.deps import valida_login
 
 
 class AreaAdmin(BaseCrudView):
 
     def __init__(self) -> None:
-        self.router = APIRouter()
-
-        self.router.routes.append(Route(path='/area/list', endpoint=self.object_list, methods=["GET",], name='area_list'))
-        self.router.routes.append(Route(path='/area/create', endpoint=self.object_create, methods=["GET", "POST"], name='area_create'))
-        self.router.routes.append(Route(path='/area/details/{area_id:int}', endpoint=self.object_edit, methods=["GET",], name='area_details'))
-        self.router.routes.append(Route(path='/area/edit/{area_id:int}', endpoint=self.object_edit, methods=["GET", "POST"], name='area_edit'))
-        self.router.routes.append(Route(path='/area/delete/{area_id:int}', endpoint=self.object_delete, methods=["DELETE",], name='area_delete'))
-       
-        super().__init__('area')
+        super().__init__('area') # nome (classe filha)
     
 
     async def object_list(self, request: Request) -> Response:
@@ -42,7 +30,7 @@ class AreaAdmin(BaseCrudView):
         """
         area_controller: AreaController = AreaController(request)
 
-        area_id: int = request.path_params["area_id"]
+        area_id: int = request.path_params["obj_id"]
 
         return await super().object_delete(object_controller=area_controller, obj_id=area_id)
     
@@ -51,13 +39,20 @@ class AreaAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário e criar um objeto [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         area_controller: AreaController = AreaController(request)
 
         # Se o request for GET
         if request.method == 'GET':
-            # Adicionar o request no context
-            context = {"request": area_controller.request, "ano": datetime.now().year}
-
             return settings.TEMPLATES.TemplateResponse(f"admin/area/create.html", context=context)
         
         # Se o request for POST
@@ -70,12 +65,7 @@ class AreaAdmin(BaseCrudView):
         except ValueError as err:
             area: str = form.get('area')
             dados = {"area": area}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "objeto": dados
-            }
+            context.update = {"error": err, "objeto": dados}
             return settings.TEMPLATES.TemplateResponse("admin/area/create.html", context=context)
         
         return RedirectResponse(request.url_for("area_list"), status_code=status.HTTP_302_FOUND)
@@ -85,9 +75,20 @@ class AreaAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário de edição e atualizar uma area [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         area_controller: AreaController = AreaController(request)
 
-        area_id: int = request.path_params["area_id"]
+        # Recebe o id do objeto
+        area_id: int = request.path_params["obj_id"]
         
         # Se o request for GET
         if request.method == 'GET':
@@ -96,6 +97,7 @@ class AreaAdmin(BaseCrudView):
         # Se o request for POST
         area_obj = await area_controller.get_one_crud(id_obj=area_id)
 
+        # Verifica se o objeto existe
         if not area_obj:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         
@@ -108,12 +110,7 @@ class AreaAdmin(BaseCrudView):
         except ValueError as err:
             area: str = form.get('area')
             dados = {"id": area_id, "area": area}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "dados": dados
-            }
+            context.update({"error": err,"dados": dados})
             return settings.TEMPLATES.TemplateResponse("admin/area/edit.html", context=context)
         
         return RedirectResponse(request.url_for("area_list"), status_code=status.HTTP_302_FOUND)

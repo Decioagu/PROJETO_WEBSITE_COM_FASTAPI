@@ -1,15 +1,29 @@
 from fastapi import FastAPI
+from fastapi.middleware import Middleware # Importando o FastAPI e Middleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware # Middleware para validar o host
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware # Middleware para redirecionar para HTTPS
 
 import sys 
 import os 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__)))) # caminho absoluto do diretório
-from views import home_view, error_view
-from views.admin import admin_view ###
+from views import home_view, error_view 
+from views.admin import admin_view 
 
-app = FastAPI(docs_url=None, redoc_url=None, exception_handlers=error_view.exception_handlers) # elimina pagina de documentação FastAPI
+middlewares = [
+    Middleware(
+        TrustedHostMiddleware, 
+        allowed_hosts=["localhost", "127.0.0.1"] # Hosts permitidos
+    ),
+    # Middleware(HTTPSRedirectMiddleware),
+]
+
+app = FastAPI(docs_url=None, 
+              redoc_url=None, 
+              exception_handlers=error_view.exception_handlers,
+              middleware=middlewares) # Personalização de tratamento de erros
 
 # ================================ ACESSO AS ROTAS ====================================
-app.include_router(home_view.router)
+app.include_router(home_view.router) ###
 app.include_router(admin_view.router) ###
 
 # ================================ CAMINHO DA URL ====================================
@@ -31,11 +45,20 @@ if __name__ == '__main__':
 # uvicorn main:app --reload
 
 '''
-Execução:
-    Fora da pasta: uvicorn Aula_28.main:app --reload
-    Dentro da pasta: uvicorn main:app --reload
+Observação, o uso de "sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))",
+consistem em adicionar o caminho absoluto do diretório atual ao sys.path:
 
-Paginas de navegação:
-    http://127.0.0.1:8000/  (publico)
-    http://127.0.0.1:8000/admin  (privado)
+OBS :
+    Ao executar "uvicorn PROJETO_WEBSITE_COM_FASTAPI\main.py.main:app --reload",
+    fora da pagina do projeto 
+
+    Caso execute o "uvicorn main:app --reload" dentro da pasta Aula_20 utilize
+    "templates = Jinja2Templates(directory='templates')" ou o arquivo não será encontrado.
+
+REPOSITORIO/
+├── PROJETO_WEBSITE_COM_FASTAPI/
+│   └── main.py
+│   templates/
+│   └── index.html
+│   └── servico.html 
 '''

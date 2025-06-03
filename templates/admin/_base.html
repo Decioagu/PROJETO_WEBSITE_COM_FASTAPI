@@ -65,6 +65,7 @@
                         <i class="fa fa-bars"></i>
                     </button>
 
+                    {% if membro %} <!-- NOVO -->
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
@@ -72,9 +73,9 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">F. Jones</span>
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ membro.nome }}</span> <!-- NOVO nome usuário -->
                                 <img class="img-profile rounded-circle"
-                                    src="{{ url_for('static', path='admin/img/undraw_profile.svg') }}">
+                                    src="{{ url_for('media', path='membro/' + membro.imagem) }}"> <!-- NOVO imagem usuário -->
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -87,6 +88,7 @@
                         </li>
 
                     </ul>
+                    {% endif %}
 
                 </nav>
                 <!-- End of Topbar -->
@@ -122,24 +124,7 @@
     </a>
 
     <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="login.html">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
+     {% include 'admin/modals/logout.html' %}
 
     <!-- Bootstrap core JavaScript-->
     <script src="{{ url_for('static', path='admin/vendor/jquery/jquery.min.js') }}"></script>

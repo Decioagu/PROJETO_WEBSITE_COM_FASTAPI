@@ -1,7 +1,3 @@
-from datetime import datetime
-
-from fastapi.routing import APIRouter
-from starlette.routing import Route
 from fastapi import status
 from fastapi.requests import Request
 from fastapi.responses import Response, RedirectResponse
@@ -10,21 +6,13 @@ from fastapi.exceptions import HTTPException
 from core.configs import settings
 from controllers.tag_controller import TagController
 from views.admin.base_crud_view import BaseCrudView
-
+from core.deps import valida_login
 
 
 class TagAdmin(BaseCrudView):
 
     def __init__(self) -> None:
-        self.router = APIRouter()
-
-        self.router.routes.append(Route(path='/tag/list', endpoint=self.object_list, methods=["GET",], name='tag_list'))
-        self.router.routes.append(Route(path='/tag/create', endpoint=self.object_create, methods=["GET", "POST"], name='tag_create'))
-        self.router.routes.append(Route(path='/tag/details/{tag_id:int}', endpoint=self.object_edit, methods=["GET",], name='tag_details'))
-        self.router.routes.append(Route(path='/tag/edit/{tag_id:int}', endpoint=self.object_edit, methods=["GET", "POST"], name='tag_edit'))
-        self.router.routes.append(Route(path='/tag/delete/{tag_id:int}', endpoint=self.object_delete, methods=["DELETE",], name='tag_delete'))
-       
-        super().__init__('tag')
+        super().__init__('tag') # nome (classe filha)
     
 
     async def object_list(self, request: Request) -> Response:
@@ -42,7 +30,7 @@ class TagAdmin(BaseCrudView):
         """
         tag_controller: TagController = TagController(request)
 
-        tag_id: int = request.path_params["tag_id"]
+        tag_id: int = request.path_params["obj_id"]
 
         return await super().object_delete(object_controller=tag_controller, obj_id=tag_id)
     
@@ -51,13 +39,21 @@ class TagAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário e criar um objeto [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         tag_controller: TagController = TagController(request)
 
         # Se o request for GET
         if request.method == 'GET':
-            # Adicionar o request no context
-            context = {"request": tag_controller.request, "ano": datetime.now().year}
-
             return settings.TEMPLATES.TemplateResponse(f"admin/tag/create.html", context=context)
         
         # Se o request for POST
@@ -70,12 +66,7 @@ class TagAdmin(BaseCrudView):
         except ValueError as err:
             tag: str = form.get('tag')
             dados = {"tag": tag}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "objeto": dados
-            }
+            context.update({"error": err, "objeto": dados})
             return settings.TEMPLATES.TemplateResponse("admin/tag/create.html", context=context)
         
         return RedirectResponse(request.url_for("tag_list"), status_code=status.HTTP_302_FOUND)
@@ -85,9 +76,21 @@ class TagAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário de edição e atualizar uma tag [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         tag_controller: TagController = TagController(request)
 
-        tag_id: int = request.path_params["tag_id"]
+        # Recebe o ID do objeto a ser editado
+        tag_id: int = request.path_params["obj_id"]
         
         # Se o request for GET
         if request.method == 'GET':
@@ -108,12 +111,7 @@ class TagAdmin(BaseCrudView):
         except ValueError as err:
             tag: str = form.get('tag')
             dados = {"id": tag_id, "tag": tag}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "dados": dados
-            }
+            context.update({"error": err, "dados": dados})
             return settings.TEMPLATES.TemplateResponse("admin/tag/edit.html", context=context)
         
         return RedirectResponse(request.url_for("tag_list"), status_code=status.HTTP_302_FOUND)

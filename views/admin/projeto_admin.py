@@ -1,7 +1,3 @@
-from datetime import datetime
-
-from fastapi.routing import APIRouter
-from starlette.routing import Route
 from fastapi import status
 from fastapi.requests import Request
 from fastapi.responses import Response, RedirectResponse
@@ -10,21 +6,13 @@ from fastapi.exceptions import HTTPException
 from core.configs import settings
 from controllers.projeto_controller import ProjetoController
 from views.admin.base_crud_view import BaseCrudView
-
+from core.deps import valida_login
 
 
 class ProjetoAdmin(BaseCrudView):
 
     def __init__(self) -> None:
-        self.router = APIRouter()
-
-        self.router.routes.append(Route(path='/projeto/list', endpoint=self.object_list, methods=["GET",], name='projeto_list'))
-        self.router.routes.append(Route(path='/projeto/create', endpoint=self.object_create, methods=["GET", "POST"], name='projeto_create'))
-        self.router.routes.append(Route(path='/projeto/details/{projeto_id:int}', endpoint=self.object_edit, methods=["GET",], name='projeto_details'))
-        self.router.routes.append(Route(path='/projeto/edit/{projeto_id:int}', endpoint=self.object_edit, methods=["GET", "POST"], name='projeto_edit'))
-        self.router.routes.append(Route(path='/projeto/delete/{projeto_id:int}', endpoint=self.object_delete, methods=["DELETE",], name='projeto_delete'))
-       
-        super().__init__('projeto')
+        super().__init__('projeto') # nome (classe filha)
     
 
     async def object_list(self, request: Request) -> Response:
@@ -42,7 +30,7 @@ class ProjetoAdmin(BaseCrudView):
         """
         projeto_controller: ProjetoController = ProjetoController(request)
 
-        projeto_id: int = request.path_params["projeto_id"]
+        projeto_id: int = request.path_params["obj_id"]
 
         return await super().object_delete(object_controller=projeto_controller, obj_id=projeto_id)
     
@@ -51,13 +39,21 @@ class ProjetoAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário e criar um objeto [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         projeto_controller: ProjetoController = ProjetoController(request)
 
         # Se o request for GET
         if request.method == 'GET':
-            # Adicionar o request no context
-            context = {"request": projeto_controller.request, "ano": datetime.now().year}
-
             return settings.TEMPLATES.TemplateResponse(f"admin/projeto/create.html", context=context)
         
         # Se o request for POST
@@ -72,12 +68,7 @@ class ProjetoAdmin(BaseCrudView):
             descricao_inicial: str = form.get('descricao_inicial')
             descricao_final: str = form.get('descricao_final')
             dados = {"titulo": titulo, "descricao_inicial": descricao_inicial, "descricao_final": descricao_final}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "objeto": dados
-            }
+            context.update({"error": err, "objeto": dados})
             return settings.TEMPLATES.TemplateResponse("admin/projeto/create.html", context=context)
         
         return RedirectResponse(request.url_for("projeto_list"), status_code=status.HTTP_302_FOUND)
@@ -87,9 +78,21 @@ class ProjetoAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário de edição e atualizar um projeto [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         projeto_controller: ProjetoController = ProjetoController(request)
 
-        projeto_id: int = request.path_params["projeto_id"]
+        # Recebe o id do projeto através do path_params
+        projeto_id: int = request.path_params["obj_id"]
         
         # Se o request for GET
         if request.method == 'GET':
@@ -112,12 +115,7 @@ class ProjetoAdmin(BaseCrudView):
             descricao_inicial: str = form.get('descricao_inicial')
             descricao_final: str = form.get('descricao_final')
             dados = {"id": projeto_id, "titulo": titulo, "descricao_inicial": descricao_inicial, "descricao_final": descricao_final}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "dados": dados
-            }
+            context.update({"error": err, "dados": dados})
             return settings.TEMPLATES.TemplateResponse("admin/projeto/edit.html", context=context)
         
         return RedirectResponse(request.url_for("projeto_list"), status_code=status.HTTP_302_FOUND)

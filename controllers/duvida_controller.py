@@ -55,7 +55,7 @@ class DuvidaController(BaseController):
                 await session.commit()
 
 
-    @property # transforma a função em um atributo
+    @property
     async def get_areas(self):
         """
         Retorna todos os registros de area

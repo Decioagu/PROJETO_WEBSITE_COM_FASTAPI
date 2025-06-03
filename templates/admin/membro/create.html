@@ -3,7 +3,9 @@
     <h1 class="h3 mb-4 text-gray-800">Cadastro de Membro</h1>
 
     {% if error %}
-        <div class="alert alert-warning" role="alert">{{ error }}</div>
+        <div class="alert alert-warning" role="alert">
+            {{ error }}
+        </div>
     {% endif %}
 
     <form method="post" action="{{ url_for('membro_create') }}" autocomplete="off" enctype="multipart/form-data">
@@ -11,6 +13,11 @@
         <div class="mb-3">
             <label for="nome" class="form-label">Nome</label>
             <input type="text" class="form-control" id="nome" name="nome" value="{% if objeto %}{{objeto.nome}}{% endif %}" required autofocus>
+        </div>
+
+        <div class="mb-3"> <!-- Adição de email -->
+            <label for="email" class="form-label">E-mail</label>
+            <input type="email" class="form-control" id="email" name="email" value="{% if objeto %}{{objeto.email}}{% endif %}" required>
         </div>
 
         <div class="mb-3">
@@ -23,7 +30,13 @@
             <input type="file" class="form-file-input" id="imagem" name="imagem" required>
         </div>
 
+        <div class="mb-3"> <!-- Adição de senha -->
+            <label for="senha" class="form-label">Senha</label>
+            <input type="password" class="form-control" id="senha" name="senha" value="{% if objeto %}{{objeto.senha}}{% endif %}" required>
+        </div>
+
         <button type="submit" class="btn btn-primary">Salvar</button>
 
     </form>
 {% endblock %}
+

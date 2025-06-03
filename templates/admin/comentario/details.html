@@ -32,12 +32,12 @@
                     </a>
                 </div>
                 <div class="col">
-                    <a href="#" data-url="{{ url_for('comentario_delete', comentario_id=objeto.id) }}" data-toggle="modal" data-target="#modal-delete" class="btn btn-danger">
+                    <a href="#" data-url="{{ url_for('comentario_delete', obj_id=objeto.id) }}" data-toggle="modal" data-target="#modal-delete" class="btn btn-danger">
                         Deletar
                     </a>
                 </div>
                 <div class="col">
-                    <a href="{{ url_for('comentario_edit', comentario_id=objeto.id) }}" class="btn btn-primary">
+                    <a href="{{ url_for('comentario_edit', obj_id=objeto.id) }}" class="btn btn-primary">
                         Editar
                     </a>
                 </div>

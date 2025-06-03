@@ -7,8 +7,8 @@ caminho_do_arquivo = Path(__file__).parent.parent
 # ======================= CONEXÃO BANCO DE DADOS ===============================
 from sqlalchemy.ext.declarative import declarative_base
 # Definição direta da URL do Banco de Dados
-# DB_URL: str = 'mysql+aiomysql://root:Enigma.1@localhost:3306/startup' # MySQL
-DB_URL: str = f"sqlite+aiosqlite:///{caminho_do_arquivo}/startup.db" # SQLite
+# DB_URL: str = 'mysql+aiomysql://root:Enigma.1@localhost:3306/novo_startup' # MySQL
+DB_URL: str = f"sqlite+aiosqlite:///{caminho_do_arquivo}/novo_startup.db" # SQLite
 
 DBBaseModel = declarative_base()
 
@@ -72,6 +72,8 @@ class Settings(BaseSettings):
 
     TEMPLATES: ClassVar[Jinja2Templates] = templates  # anotação templates
     MEDIA: ClassVar[str] = media # anotação rota
+    AUTH_COOKIE_NAME: str = "auth_cookie" # cookie de autenticação salvo no navegador HTML
+    SALTY: str = 'AnyKwYandMA7o6Cz0MTksByXHriT2fRuAO2p-0y3SbhR3Ou1PnItPFX7zL3cXo861PA9ByalGBneR7O27QRvWw' # texto aleatório para criptografia
 
     class Config:
         case_sensitive = True

@@ -1,8 +1,4 @@
-from datetime import datetime
 from typing import List
-
-from fastapi.routing import APIRouter
-from starlette.routing import Route
 from fastapi import status
 from fastapi.requests import Request
 from fastapi.responses import Response, RedirectResponse
@@ -11,21 +7,15 @@ from fastapi.exceptions import HTTPException
 from core.configs import settings
 from controllers.post_controller import PostController
 from views.admin.base_crud_view import BaseCrudView
-
+from models.autor_model import AutorModel
+from models.tag_model import TagModel
+from core.deps import valida_login
 
 
 class PostAdmin(BaseCrudView):
 
     def __init__(self) -> None:
-        self.router = APIRouter()
-
-        self.router.routes.append(Route(path='/post/list', endpoint=self.object_list, methods=["GET",], name='post_list'))
-        self.router.routes.append(Route(path='/post/create', endpoint=self.object_create, methods=["GET", "POST"], name='post_create'))
-        self.router.routes.append(Route(path='/post/details/{post_id:int}', endpoint=self.object_edit, methods=["GET",], name='post_details'))
-        self.router.routes.append(Route(path='/post/edit/{post_id:int}', endpoint=self.object_edit, methods=["GET", "POST"], name='post_edit'))
-        self.router.routes.append(Route(path='/post/delete/{post_id:int}', endpoint=self.object_delete, methods=["DELETE",], name='post_delete'))
-       
-        super().__init__('post')
+        super().__init__('post') # nome (classe filha)
     
 
     async def object_list(self, request: Request) -> Response:
@@ -43,7 +33,7 @@ class PostAdmin(BaseCrudView):
         """
         post_controller: PostController = PostController(request)
 
-        post_id: int = request.path_params["post_id"]
+        post_id: int = request.path_params["obj_id"]
 
         return await super().object_delete(object_controller=post_controller, obj_id=post_id)
     
@@ -52,14 +42,26 @@ class PostAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário e criar um objeto [GET, POST]
         """
+
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+
+        # Adicionar o request no context
         post_controller: PostController = PostController(request)
 
         # Se o request for GET
         if request.method == 'GET':
             # Adicionar o request, os autores e as tags no context
-            autores = await post_controller.get_autores()
-            tags = await post_controller.get_tags()
-            context = {"request": post_controller.request, "ano": datetime.now().year, "autores": autores, "tags": tags}
+            autores = await post_controller.get_objetos(AutorModel)
+            tags = await post_controller.get_objetos(TagModel)
+            context.update({"autores": autores, "tags": tags})
 
             return settings.TEMPLATES.TemplateResponse(f"admin/post/create.html", context=context)
         
@@ -76,12 +78,7 @@ class PostAdmin(BaseCrudView):
             texto: str = form.get('texto')
             autor: int = form.get('autor')
             dados = {"titulo": titulo, "tags": tags, "texto": texto, "autor": autor}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "objeto": dados
-            }
+            context.update({"error": err, "objeto": dados}) # Adição
             return settings.TEMPLATES.TemplateResponse("admin/post/create.html", context=context)
         
         return RedirectResponse(request.url_for("post_list"), status_code=status.HTTP_302_FOUND)
@@ -91,9 +88,21 @@ class PostAdmin(BaseCrudView):
         """
         Rota para carregar o template do formulário de edição e atualizar um post [GET, POST]
         """
+        # Validação do login do membro através do cookie de autenticação ("auth_cookie")
+        context = await valida_login(request)
+
+        # Se o membro não estiver autenticado ("auth_cookie")
+        try:
+           if not context["membro"]:
+               return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        except KeyError:
+            return settings.TEMPLATES.TemplateResponse('admin/limbo.html', context=context, status_code=status.HTTP_404_NOT_FOUND)
+        
+        # Adicionar o request no context
         post_controller: PostController = PostController(request)
 
-        post_id: int = request.path_params["post_id"]
+        # Recebe o id do post
+        post_id: int = request.path_params["obj_id"]
         
         # Se o request for GET
         if request.method == 'GET' and 'details' in str(post_controller.request.url):
@@ -106,9 +115,9 @@ class PostAdmin(BaseCrudView):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
             
             # Adicionar o request, os autores e as tags no context
-            autores = await post_controller.get_autores()
-            tags = await post_controller.get_tags()
-            context = {"request": post_controller.request, "ano": datetime.now().year, "objeto": post, "tags": tags, "autores": autores}
+            autores = await post_controller.get_objetos(AutorModel)
+            tags = await post_controller.get_objetos(TagModel)
+            context.update({"objeto": post, "tags": tags, "autores": autores})
 
             return settings.TEMPLATES.TemplateResponse(f"admin/post/edit.html", context=context)
         
@@ -130,12 +139,7 @@ class PostAdmin(BaseCrudView):
             texto: str = form.get('texto')
             autor: int = form.get('autor')
             dados = {"id": post_id, "titulo": titulo, "tags": tags, "texto": texto, "autor": autor}
-            context = {
-                "request": request,
-                "ano": datetime.now().year,
-                "error": err,
-                "dados": dados
-            }
+            context.update({"error": err, "dados": dados})
             return settings.TEMPLATES.TemplateResponse("admin/post/edit.html", context=context)
         
         return RedirectResponse(request.url_for("post_list"), status_code=status.HTTP_302_FOUND)

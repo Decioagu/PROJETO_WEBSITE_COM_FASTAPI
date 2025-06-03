@@ -12,6 +12,7 @@ from core.configs import settings
 from core.configs import get_session
 from models.autor_model import AutorModel
 from controllers.base_controller import BaseController
+from models.tag_model import TagModel
 
 
 class AutorController(BaseController):
@@ -48,7 +49,7 @@ class AutorController(BaseController):
 
         # Busca e adiciona as tags
         for id_tag in tags:
-            tag = await self.get_tag(id_tag=int(id_tag))
+            tag = await self.get_objeto(model_obj=TagModel, id_obj=int(id_tag))
             autor.tags.append(tag)
 
         # Fazer o upload do arquivo
@@ -81,10 +82,10 @@ class AutorController(BaseController):
                     await session.commit()
                     # Busca e adiciona as tags
                     for id_tag in tags:
-                        tag = await self.get_tag(id_tag=int(id_tag))
-                        # Operação "merge(tag)"" juntar o objeto "tag" que vem de outra sessão com o objeto autor
-                        # await session.merge(tag) | Verifica registro da chave primária
-                        tag_local = await session.merge(tag) # "merge(tag)" sincroniza o objeto "tag" com a sessão atual
+                        tag = await self.get_objeto(model_obj=TagModel, id_obj=int(id_tag))
+                        # Operação para juntar o objeto tag que vem de outra
+                        # sessão com o objeto autor que está nesta sessão.
+                        tag_local = await session.merge(tag)
                         autor.tags.append(tag_local)
                 if imagem.filename:
                     # Gera um nome aleatório
