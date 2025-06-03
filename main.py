@@ -48,12 +48,12 @@ if __name__ == '__main__':
 Observação, o uso de "sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__))))",
 consistem em adicionar o caminho absoluto do diretório atual ao sys.path:
 
-OBS :
-    Ao executar "uvicorn PROJETO_WEBSITE_COM_FASTAPI\main.py.main:app --reload",
-    fora da pagina do projeto 
+Caso o projeto seja executado fora do diretório do projeto:
+    Exemplo: "uvicorn PROJETO_WEBSITE_COM_FASTAPI.main.py.main:app --reload".
 
-    Caso execute o "uvicorn main:app --reload" dentro da pasta Aula_20 utilize
-    "templates = Jinja2Templates(directory='templates')" ou o arquivo não será encontrado.
+Caso execute o "uvicorn main:app --reload" dentro da pasta PROJETO_WEBSITE_COM_FASTAPI 
+não ocorrera erro de caminho de diretório.
+
 
 REPOSITORIO/
 ├── PROJETO_WEBSITE_COM_FASTAPI/
