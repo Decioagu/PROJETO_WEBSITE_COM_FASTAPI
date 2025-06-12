@@ -2,7 +2,7 @@
 
 - Projeto FULLSTACK construção de WEBSITE com FastAPI e conexão em Banco de Dados.
 
-- Este projeto consiste em aplicação das tecnologias FastAPI, SQLAlchemy e Jinja2. Para manipulação de paginas HTML e Banco de Dados, utilizando as linguagens de programação Python.
+- Este projeto consiste em aplicação das tecnologias FastAPI, SQLAlchemy e Jinja2. Para manipulação de paginas HTML e Banco de Dados, utilizando as linguagens de programação Python e JavaScript.
 
 - O projeto consiste em duas áreas distintas de navegação paginas (publicas) de acesso comum de usuários e paginas (privadas) para área administrativa de acesso restrito a membros cadastrado.
 
